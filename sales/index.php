@@ -32,11 +32,11 @@ try {
     // Cashiers can only see their own sales
     if (!isAdmin()) {
         $query .= " AND s.user_id = ? ";
-        $stmt = $pdo->prepare($query . " ORDER BY s.sale_date DESC");
+        $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
         $stmt->execute([$date_from, $date_to, $_SESSION['user_id']]);
     } else {
         // Admins see all sales
-        $stmt = $pdo->prepare($query . " ORDER BY s.sale_date DESC");
+        $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
         $stmt->execute([$date_from, $date_to]);
     }
     

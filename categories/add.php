@@ -6,8 +6,7 @@
 require_once '../config.php';
 requireAdmin();
 
-$page_title = 'Add Category';
-require_once '../includes/header.php';
+
 
 $error = '';
 
@@ -40,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$page_title = 'Add Category';
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>

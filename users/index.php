@@ -14,7 +14,7 @@ $pdo = getDB();
 $users = [];
 
 try {
-    $stmt = $pdo->query("SELECT user_id, username, role, created_at FROM users ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT user_id, username, role, created_at FROM users ORDER BY user_id ASC");
     $users = $stmt->fetchAll();
 } catch (PDOException $e) {
     $error = "Error loading users: " . $e->getMessage();

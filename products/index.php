@@ -30,7 +30,7 @@ try {
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.category_id 
             {$where}
-            ORDER BY p.product_name";
+            ORDER BY p.product_id ASC";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

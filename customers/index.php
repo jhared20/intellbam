@@ -31,7 +31,7 @@ try {
             LEFT JOIN sales s ON c.customer_id = s.customer_id
             {$where}
             GROUP BY c.customer_id
-            ORDER BY c.full_name";
+            ORDER BY c.customer_id ASC";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

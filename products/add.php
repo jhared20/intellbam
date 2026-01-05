@@ -6,8 +6,6 @@
 require_once '../config.php';
 requireAdmin();
 
-$page_title = 'Add Product';
-require_once '../includes/header.php';
 
 $pdo = getDB();
 $error = '';
@@ -55,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$page_title = 'Add Product';
+require_once '../includes/header.php';
+
 ?>
 
 <?php if ($error): ?>

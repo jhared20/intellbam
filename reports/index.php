@@ -40,7 +40,7 @@ try {
             LEFT JOIN sale_items si ON s.sale_id = si.sale_id
             WHERE DATE(s.sale_date) = ?
             GROUP BY s.sale_id
-            ORDER BY s.sale_date DESC
+            ORDER BY s.sale_id ASC
         ");
         $stmt->execute([$date]);
         $report_data = $stmt->fetchAll();
@@ -77,7 +77,7 @@ try {
             LEFT JOIN sale_items si ON s.sale_id = si.sale_id
             WHERE YEAR(s.sale_date) = ? AND MONTH(s.sale_date) = ?
             GROUP BY DATE(s.sale_date)
-            ORDER BY sale_date DESC
+            ORDER BY sale_date ASC
         ");
         $stmt->execute([$year, $month_num]);
         $report_data = $stmt->fetchAll();
