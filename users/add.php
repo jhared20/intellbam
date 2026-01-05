@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>
