@@ -14,40 +14,72 @@ $pdo = getDB();
 
 // Get statistics
 try {
-    // Total products
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products");
-    $total_products = $stmt->fetch()['total'];
+    // Initialize variables with defaults
+    $total_products = 0;
+    $total_categories = 0;
+    $total_customers = 0;
+    $low_stock = 0;
     
-    // Total categories
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM categories");
-    $total_categories = $stmt->fetch()['total'];
+    if (isAdmin()) {
+        // Admin gets full statistics
+        // Total products
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM products");
+        $total_products = $stmt->fetch()['total'];
+        
+        // Total categories
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM categories");
+        $total_categories = $stmt->fetch()['total'];
+        
+        // Total customers
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM customers");
+        $total_customers = $stmt->fetch()['total'];
+        
+        // Low stock products (less than 10)
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE stock_quantity < 10");
+        $low_stock = $stmt->fetch()['total'];
+    }
     
-    // Total customers
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM customers");
-    $total_customers = $stmt->fetch()['total'];
-    
-    // Today's sales
-    $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sale_date) = CURDATE()");
+    // Today's sales - Admins see all, Cashiers see only their own
+    if (isAdmin()) {
+        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sale_date) = CURDATE()");
+    } else {
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sale_date) = CURDATE() AND user_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+    }
     $today_sales = $stmt->fetch()['total'];
     
-    // This month's sales
-    $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE())");
+    // This month's sales - Admins see all, Cashiers see only their own
+    if (isAdmin()) {
+        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE())");
+    } else {
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE()) AND user_id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+    }
     $month_sales = $stmt->fetch()['total'];
     
-    // Low stock products (less than 10)
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM products WHERE stock_quantity < 10");
-    $low_stock = $stmt->fetch()['total'];
-    
-    // Recent sales
-    $stmt = $pdo->prepare("
-        SELECT s.*, u.username, c.full_name as customer_name
-        FROM sales s
-        LEFT JOIN users u ON s.user_id = u.user_id
-        LEFT JOIN customers c ON s.customer_id = c.customer_id
-        ORDER BY s.sale_date DESC
-        LIMIT 10
-    ");
-    $stmt->execute();
+    // Recent sales - Admins see all, Cashiers see only their own
+    if (isAdmin()) {
+        $stmt = $pdo->prepare("
+            SELECT s.*, u.username, c.full_name as customer_name
+            FROM sales s
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN customers c ON s.customer_id = c.customer_id
+            ORDER BY s.sale_date DESC
+            LIMIT 10
+        ");
+        $stmt->execute();
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT s.*, u.username, c.full_name as customer_name
+            FROM sales s
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN customers c ON s.customer_id = c.customer_id
+            WHERE s.user_id = ?
+            ORDER BY s.sale_date DESC
+            LIMIT 10
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+    }
     $recent_sales = $stmt->fetchAll();
     
 } catch (PDOException $e) {
@@ -56,6 +88,7 @@ try {
 ?>
 
 <div class="row mb-4">
+    <?php if (isAdmin()): ?>
     <div class="col-md-3 mb-3">
         <div class="card text-white bg-primary">
             <div class="card-body">
@@ -69,13 +102,14 @@ try {
             </div>
         </div>
     </div>
+    <?php endif; ?>
     
     <div class="col-md-3 mb-3">
         <div class="card text-white bg-success">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-2">Today's Sales</h6>
+                        <h6 class="card-subtitle mb-2"><?php echo isAdmin() ? "Today's Sales" : "My Sales Today"; ?></h6>
                         <h2 class="mb-0"><?php echo formatCurrency($today_sales); ?></h2>
                     </div>
                     <i class="bi bi-cash-coin" style="font-size: 3rem; opacity: 0.5;"></i>
@@ -89,7 +123,7 @@ try {
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-2">This Month</h6>
+                        <h6 class="card-subtitle mb-2"><?php echo isAdmin() ? "This Month" : "My Monthly Sales"; ?></h6>
                         <h2 class="mb-0"><?php echo formatCurrency($month_sales); ?></h2>
                     </div>
                     <i class="bi bi-graph-up" style="font-size: 3rem; opacity: 0.5;"></i>
@@ -98,6 +132,7 @@ try {
         </div>
     </div>
     
+    <?php if (isAdmin()): ?>
     <div class="col-md-3 mb-3">
         <div class="card text-white bg-warning">
             <div class="card-body">
@@ -111,6 +146,7 @@ try {
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <div class="row">

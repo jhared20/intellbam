@@ -1,14 +1,14 @@
 <?php
 /**
- * Sales Reports
+ * Sales Reports (Admin Only)
  * Daily and Monthly sales reports
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Sales Reports';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 
 $pdo = getDB();
 $report_type = $_GET['type'] ?? 'daily';
@@ -319,5 +319,5 @@ try {
 }
 </style>
 
-<?php require_once __DIR__ . '/../config.php';?>
+<?php require_once '../includes/footer.php'; ?>
 

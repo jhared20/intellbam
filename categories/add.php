@@ -1,12 +1,14 @@
 <?php
 /**
- * Add Category
+ * Add Category (Admin Only)
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Add Category';
+require_once '../includes/header.php';
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$category_name]);
                 
                 logActivity("Category created: {$category_name}");
-
+                
                 header('Location: index.php?success=1');
                 exit;
             }
@@ -39,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?php echo escape($error); ?></div>
@@ -68,5 +69,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

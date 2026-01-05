@@ -3,11 +3,9 @@
  * Edit User (Admin Only)
  */
 
-require_once __DIR__ . '/../../config.php';
+require_once '../config.php';
 requireAdmin();
 
-$page_title = 'Edit User';
-require_once __DIR__ . '/../../includes/header.php';
 $pdo = getDB();
 $error = '';
 $user = null;
@@ -34,6 +32,7 @@ try {
     $error = "Error loading user: " . $e->getMessage();
 }
 
+// Handle POST request BEFORE including header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -71,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$page_title = 'Edit User';
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>
@@ -113,5 +115,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

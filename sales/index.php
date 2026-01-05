@@ -4,11 +4,11 @@
  * List all completed sales
  */
 
-require_once '../../config.php';
+require_once '../config.php';
 requireLogin();
 
 $page_title = 'Sales History';
-require_once '../../includes/header.php';
+require_once '../includes/header.php';
 
 $pdo = getDB();
 $sales = [];
@@ -20,16 +20,26 @@ $date_from = $_GET['date_from'] ?? date('Y-m-d');
 $date_to = $_GET['date_to'] ?? date('Y-m-d');
 
 try {
-    $stmt = $pdo->prepare("
+    $query = "
         SELECT s.*, u.username, c.full_name as customer_name, p.payment_method
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.user_id
         LEFT JOIN customers c ON s.customer_id = c.customer_id
         LEFT JOIN payments p ON s.sale_id = p.sale_id
         WHERE DATE(s.sale_date) BETWEEN ? AND ?
-        ORDER BY s.sale_date DESC
-    ");
-    $stmt->execute([$date_from, $date_to]);
+    ";
+    
+    // Cashiers can only see their own sales
+    if (!isAdmin()) {
+        $query .= " AND s.user_id = ? ";
+        $stmt = $pdo->prepare($query . " ORDER BY s.sale_date DESC");
+        $stmt->execute([$date_from, $date_to, $_SESSION['user_id']]);
+    } else {
+        // Admins see all sales
+        $stmt = $pdo->prepare($query . " ORDER BY s.sale_date DESC");
+        $stmt->execute([$date_from, $date_to]);
+    }
+    
     $sales = $stmt->fetchAll();
     
     // Calculate totals
@@ -131,5 +141,5 @@ try {
     </div>
 </div>
 
-<?php require_once '../../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

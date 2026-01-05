@@ -4,7 +4,7 @@
  * Display receipt for completed sale
  */
 
-require_once __DIR__ . '/../config.php';
+require_once '../config.php';
 requireLogin();
 
 $pdo = getDB();
@@ -49,7 +49,7 @@ try {
 }
 
 $page_title = 'Receipt #' . $sale_id;
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 ?>
 
 <div class="row justify-content-center">
@@ -173,5 +173,5 @@ require_once __DIR__ . '/../includes/header.php';
 }
 </style>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

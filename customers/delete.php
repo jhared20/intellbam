@@ -1,10 +1,10 @@
 <?php
 /**
- * Delete Customer
+ * Delete Customer (Admin Only)
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $pdo = getDB();
 $customer_id = $_GET['id'] ?? 0;

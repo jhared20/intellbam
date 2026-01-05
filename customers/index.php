@@ -1,14 +1,14 @@
 <?php
 /**
- * Customers Management
+ * Customers Management (Admin Only)
  * List all customers
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Customers';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 
 $pdo = getDB();
 $customers = [];

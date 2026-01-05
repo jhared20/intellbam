@@ -93,6 +93,29 @@ function requireAdmin() {
 }
 
 /**
+ * Require cashier or admin - redirect if neither
+ */
+function requireCashier() {
+    requireLogin();
+    if (!isCashier() && !isAdmin()) {
+        header('Location: ' . BASE_URL . 'index.php');
+        exit;
+    }
+}
+
+/**
+ * Require admin or owner - for viewing personal sales history
+ * $user_id_to_check: the user_id to verify ownership
+ */
+function requireAdminOrOwner($user_id_to_check) {
+    requireLogin();
+    if (!isAdmin() && $_SESSION['user_id'] != $user_id_to_check) {
+        header('Location: ' . BASE_URL . 'index.php');
+        exit;
+    }
+}
+
+/**
  * Log activity
  */
 function logActivity($action) {

@@ -1,14 +1,14 @@
 <?php
 /**
- * Categories Management
+ * Categories Management (Admin Only)
  * List all categories
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Categories';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 
 $pdo = getDB();
 $categories = [];
@@ -85,5 +85,5 @@ try {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../config.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

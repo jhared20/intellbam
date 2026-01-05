@@ -1,10 +1,10 @@
 <?php
 /**
- * Edit Product
+ * Edit Product (Admin Only)
  */
 
 require_once '../config.php';
-requireLogin();
+requireAdmin();
 
 $pdo = getDB();
 $error = '';
@@ -38,10 +38,9 @@ try {
     }
 } catch (PDOException $e) {
     $error = "Error loading product: " . $e->getMessage();
-    header('Location: index.php');
-    exit;
 }
 
+// Handle POST request BEFORE including header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = $_POST['category_id'] ?? 0;
     $product_name = trim($_POST['product_name'] ?? '');
@@ -70,19 +69,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 header('Location: index.php?success=1');
                 exit;
-                
             }
         } catch (PDOException $e) {
             $error = 'Error updating product: ' . $e->getMessage();
         }
-    
-       
     }
-    
 }
 
 $page_title = 'Edit Product';
- require_once '../includes/header.php';
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>

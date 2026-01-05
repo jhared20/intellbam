@@ -1,13 +1,14 @@
 <?php
 /**
- * Add Customer
+ * Add Customer (Admin Only)
  */
 
-
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Add Customer';
+require_once '../includes/header.php';
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -33,8 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?php echo escape($error); ?></div>
@@ -68,5 +67,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

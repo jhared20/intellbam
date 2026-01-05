@@ -1,10 +1,10 @@
 <?php
 /**
- * Delete Category
+ * Delete Category (Admin Only)
  */
 
-require_once __DIR__ . '../../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $pdo = getDB();
 $category_id = $_GET['id'] ?? 0;

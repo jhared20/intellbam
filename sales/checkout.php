@@ -4,7 +4,7 @@
  * Process payment and complete sale
  */
 
-require_once __DIR__ . '/../config.php';
+require_once '../config.php';
 requireLogin();
 
 $pdo = getDB();
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = 'Checkout';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>
@@ -234,5 +234,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require_once '../../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

@@ -3,7 +3,7 @@
  * Clear Cart
  */
 
-require_once '../../config.php';
+require_once '../config.php';
 requireLogin();
 
 $_SESSION['cart'] = [];

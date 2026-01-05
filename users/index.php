@@ -4,11 +4,12 @@
  * List all users
  */
 
-require_once __DIR__ . '/../config.php';
+require_once '../config.php';
 requireAdmin();
 
 $page_title = 'User Management';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
+
 $pdo = getDB();
 $users = [];
 
@@ -78,5 +79,5 @@ try {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

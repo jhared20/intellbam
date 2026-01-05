@@ -1,13 +1,10 @@
 <?php
 /**
- * Edit Customer
+ * Edit Customer (Admin Only)
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
-
-$page_title = 'Edit Customer';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../config.php';
+requireAdmin();
 
 $pdo = getDB();
 $error = '';
@@ -33,6 +30,7 @@ try {
     $error = "Error loading customer: " . $e->getMessage();
 }
 
+// Handle POST request BEFORE including header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim($_POST['full_name'] ?? '');
     $contact = trim($_POST['contact'] ?? '');
@@ -53,6 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$page_title = 'Edit Customer';
+require_once '../includes/header.php';
 ?>
 
 <?php if ($error): ?>

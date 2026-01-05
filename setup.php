@@ -37,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || (php_sapi_name() === 'cli' && $user
         }
         
         // Update or insert cashier
-        $stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ?");
         $stmt->execute(['cashier']);
         if ($stmt->fetch()) {
             $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE username = 'cashier'");

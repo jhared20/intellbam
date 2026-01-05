@@ -1,14 +1,14 @@
 <?php
 /**
- * Products Management
+ * Products Management (Admin Only)
  * List all products with inventory
  */
 
-require_once __DIR__ . '/../config.php';
-requireLogin();
+require_once '../config.php';
+requireAdmin();
 
 $page_title = 'Products';
-require_once __DIR__ . '/../includes/header.php';
+require_once '../includes/header.php';
 
 $pdo = getDB();
 $products = [];
@@ -124,5 +124,5 @@ try {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../config.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

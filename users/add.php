@@ -3,10 +3,12 @@
  * Add User (Admin Only)
  */
 
-require_once __DIR__ . '/../config.php';
+require_once '../config.php';
 requireAdmin();
 
 $page_title = 'Add User';
+require_once '../includes/header.php';
+
 $error = '';
 $success = '';
 
@@ -48,8 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
-
 <?php if ($error): ?>
 <div class="alert alert-danger"><?php echo escape($error); ?></div>
 <?php endif; ?>
@@ -90,5 +90,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 

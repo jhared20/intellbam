@@ -129,6 +129,7 @@
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'sales') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>sales/pos.php">
                 <i class="bi bi-cart-plus"></i> POS / Sales
             </a>
+            <?php if (isAdmin()): ?>
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'products') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>products/index.php">
                 <i class="bi bi-box-seam"></i> Products
             </a>
@@ -141,12 +142,15 @@
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'reports') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>reports/index.php">
                 <i class="bi bi-graph-up"></i> Reports
             </a>
-            <?php if (isAdmin()): ?>
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'users') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>users/index.php">
                 <i class="bi bi-person-gear"></i> Users
             </a>
             <?php endif; ?>
-            <div class="mt-auto p-3 text-center">
+            <div class="mt-auto p-3">
+                <div class="text-center mb-3">
+                    <small class="text-white-50">Logged in as: <strong><?php echo escape($_SESSION['username']); ?></strong></small><br>
+                    <small class="text-white-50">Role: <span class="badge bg-light text-dark"><?php echo escape($_SESSION['role']); ?></span></small>
+                </div>
                 <a class="nav-link" href="<?php echo BASE_URL; ?>auth/logout.php">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
@@ -159,18 +163,9 @@
         <?php if (isLoggedIn()): ?>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><?php echo isset($page_title) ? escape($page_title) : 'Dashboard'; ?></h2>
-            <div class="d-flex align-items-center gap-3">
-                <?php if (isLoggedIn()): ?>
-                <div class="text-end d-none d-md-block me-2">
-                    <small class="text-muted d-block">Logged in as</small>
-                    <strong class="d-block"><?php echo escape($_SESSION['username']); ?></strong>
-                    <span class="badge bg-light text-dark mt-1"><?php echo escape($_SESSION['role']); ?></span>
-                </div>
-                <?php endif; ?>
-                <button class="btn btn-primary d-md-none" type="button" onclick="toggleSidebar()">
-                    <i class="bi bi-list"></i>
-                </button>
-            </div>
+            <button class="btn btn-primary d-md-none" type="button" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
         </div>
         <?php endif; ?>
 

@@ -1,12 +1,10 @@
 <?php
 /**
- * Edit Category
+ * Edit Category (Admin Only)
  */
 
-require_once __DIR__ . '../config.php';
-requireLogin();
-
-$page_title = 'Edit Category';
+require_once '../config.php';
+requireAdmin();
 
 $pdo = getDB();
 $error = '';
@@ -32,6 +30,7 @@ try {
     $error = "Error loading category: " . $e->getMessage();
 }
 
+// Handle POST request BEFORE including header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_name = trim($_POST['category_name'] ?? '');
     
@@ -57,10 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Error updating category: ' . $e->getMessage();
         }
     }
-    require_once __DIR__ . '../../includes/header.php';
 }
-?>
 
+$page_title = 'Edit Category';
+require_once '../includes/header.php';
+?>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?php echo escape($error); ?></div>
@@ -89,5 +89,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<?php require_once __DIR__ . '../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 
