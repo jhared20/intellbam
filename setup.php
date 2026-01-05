@@ -23,10 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || (php_sapi_name() === 'cli' && $user
         $admin_hash = password_hash('admin123', PASSWORD_DEFAULT);
         $cashier_hash = password_hash('cashier123', PASSWORD_DEFAULT);
         
-        // Check if users exist
+        // Check if admin exists
         $stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ?");
-        
-        // Update or insert admin
         $stmt->execute(['admin']);
         if ($stmt->fetch()) {
             $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE username = 'admin'");
@@ -36,7 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || (php_sapi_name() === 'cli' && $user
             $stmt->execute([$admin_hash]);
         }
         
-        // Update or insert cashier
+        // Check if cashier exists
+        $stmt = $pdo->prepare("SELECT user_id FROM users WHERE username = ?");
         $stmt->execute(['cashier']);
         if ($stmt->fetch()) {
             $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE username = 'cashier'");
