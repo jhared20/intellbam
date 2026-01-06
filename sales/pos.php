@@ -47,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             break;
                         }
                     }
+                    // Important: unset the reference to avoid unexpected overwrites when appending
+                    unset($item);
                     
                     if (!$found && empty($error)) {
                         $_SESSION['cart'][] = [

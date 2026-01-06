@@ -32,8 +32,8 @@ try {
         exit;
     }
     
-    // Get customer name from session
-    $customer_name = $_SESSION['sale_customer_name'] ?? '';
+    // Prefer stored customer name from the sale record, fallback to session value
+    $customer_name = $sale['customer_name'] ?? ($_SESSION['sale_customer_name'] ?? '');
     unset($_SESSION['sale_customer_name']);
     
     // Get sale items
@@ -89,7 +89,7 @@ require_once '../includes/header.php';
                     <div class="row mb-2">
                         <div class="col-6"><strong>Customer:</strong></div>
                         <div class="col-6">
-                            <input type="text" class="form-control form-control-sm" id="customer_name" placeholder="Walk-in Customer" value="Walk-in Customer">
+                            <input type="text" class="form-control form-control-sm" id="customer_name" placeholder="Walk-in Customer" value="<?php echo escape($customer_name ?: 'Walk-in Customer'); ?>">
                         </div>
                     </div>
                     <?php endif; ?>

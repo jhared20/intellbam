@@ -12,13 +12,18 @@ require_once 'includes/header.php';
 
 $pdo = getDB();
 
+// Default values to avoid undefined variable warnings if queries fail
+$total_products = 0;
+$total_categories = 0;
+$total_customers = 0;
+$low_stock = 0;
+$today_sales = 0.00;
+$month_sales = 0.00;
+$recent_sales = [];
+$error = '';
+
 // Get statistics
 try {
-    // Initialize variables with defaults
-    $total_products = 0;
-    $total_categories = 0;
-    $total_customers = 0;
-    $low_stock = 0;
     
     if (isAdmin()) {
         // Admin gets full statistics

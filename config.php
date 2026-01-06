@@ -121,9 +121,32 @@ function requireAdminOrOwner($user_id_to_check) {
 function logActivity($action) {
     $pdo = getDB();
     $user_id = $_SESSION['user_id'] ?? null;
-    
-    $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
-    $stmt->execute([$user_id, $action]);
+    // Only attempt to log if we have a valid user_id; avoid FK errors when user is missing
+    try {
+        if ($user_id) {
+            // Verify user exists to prevent foreign key violations
+            $check = $pdo->prepare("SELECT user_id FROM users WHERE user_id = ?");
+            $check->execute([$user_id]);
+            $exists = (bool) $check->fetch();
+        } else {
+            $exists = false;
+        }
+
+        if ($exists) {
+            $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
+            $stmt->execute([$user_id, $action]);
+        } else {
+            // If no valid user, insert without user_id if column allows NULL, otherwise skip logging
+            $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (NULL, ?)");
+            try {
+                $stmt->execute([$action]);
+            } catch (PDOException $e) {
+                // If inserting NULL also fails due to schema, silently skip logging to avoid fatal errors
+            }
+        }
+    } catch (PDOException $e) {
+        // Avoid throwing exceptions from logging — non-critical
+    }
 }
 
 /**

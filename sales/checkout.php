@@ -76,7 +76,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Create sale record (store customer name as denormalized field)
-            $user_id = $_SESSION['user_id'];
+            $session_user_id = $_SESSION['user_id'] ?? null;
+            // Verify user exists; if not, record sale with NULL user_id to avoid FK errors
+            $user_id = null;
+            if ($session_user_id) {
+                $check = $pdo->prepare("SELECT user_id FROM users WHERE user_id = ?");
+                $check->execute([$session_user_id]);
+                if ($check->fetch()) {
+                    $user_id = $session_user_id;
+                }
+            }
             $customer_display_name = !empty($customer_name) ? $customer_name : null;
             $stmt = $pdo->prepare("INSERT INTO sales (customer_id, customer_name, user_id, total_amount) VALUES (?, ?, ?, ?)");
             $stmt->execute([$customer_id, $customer_display_name, $user_id, $cart_total]);
