@@ -46,44 +46,40 @@ try {
     
     // Today's sales - Admins see all, Cashiers see only their own
     if (isAdmin()) {
-        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sale_date) = CURDATE()");
+        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sales_date) = CURDATE()");
     } else {
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sale_date) = CURDATE() AND user_id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE DATE(sales_date) = CURDATE() AND username = ?");
+        $stmt->execute([$_SESSION['username']]);
     }
     $today_sales = $stmt->fetch()['total'];
     
     // This month's sales - Admins see all, Cashiers see only their own
     if (isAdmin()) {
-        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE())");
+        $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sales_date) = MONTH(CURDATE()) AND YEAR(sales_date) = YEAR(CURDATE())");
     } else {
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sale_date) = MONTH(CURDATE()) AND YEAR(sale_date) = YEAR(CURDATE()) AND user_id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) as total FROM sales WHERE MONTH(sales_date) = MONTH(CURDATE()) AND YEAR(sales_date) = YEAR(CURDATE()) AND username = ?");
+        $stmt->execute([$_SESSION['username']]);
     }
     $month_sales = $stmt->fetch()['total'];
     
     // Recent sales - Admins see all, Cashiers see only their own
     if (isAdmin()) {
         $stmt = $pdo->prepare("
-            SELECT s.*, u.username, c.full_name as customer_name
-            FROM sales s
-            LEFT JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN customers c ON s.customer_id = c.customer_id
-            ORDER BY s.sale_date DESC
+            SELECT *
+            FROM sales
+            ORDER BY sales_date DESC
             LIMIT 10
         ");
         $stmt->execute();
     } else {
         $stmt = $pdo->prepare("
-            SELECT s.*, u.username, c.full_name as customer_name
-            FROM sales s
-            LEFT JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN customers c ON s.customer_id = c.customer_id
-            WHERE s.user_id = ?
-            ORDER BY s.sale_date DESC
+            SELECT *
+            FROM sales
+            WHERE username = ?
+            ORDER BY sales_date DESC
             LIMIT 10
         ");
-        $stmt->execute([$_SESSION['user_id']]);
+        $stmt->execute([$_SESSION['username']]);
     }
     $recent_sales = $stmt->fetchAll();
     
@@ -180,8 +176,8 @@ try {
                             <?php else: ?>
                             <?php foreach ($recent_sales as $sale): ?>
                             <tr>
-                                <td>#<?php echo $sale['sale_id']; ?></td>
-                                <td><?php echo formatDate($sale['sale_date']); ?></td>
+                                <td>#<?php echo $sale['sales_id']; ?></td>
+                                <td><?php echo formatDate($sale['sales_date']); ?></td>
                                 <td><?php echo escape($sale['customer_name'] ?? 'Walk-in'); ?></td>
                                 <td><?php echo escape($sale['username']); ?></td>
                                 <td><strong><?php echo formatCurrency($sale['total_amount']); ?></strong></td>

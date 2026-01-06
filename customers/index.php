@@ -21,14 +21,14 @@ $where = '';
 $params = [];
 
 if (!empty($search)) {
-    $where = "WHERE full_name LIKE ? OR contact LIKE ?";
-    $params = ["%{$search}%", "%{$search}%"];
+    $where = "WHERE c.customer_name LIKE ?";
+    $params = ["%{$search}%"];
 }
 
 try {
-    $sql = "SELECT c.*, COUNT(s.sale_id) as total_sales, COALESCE(SUM(s.total_amount), 0) as total_spent
+    $sql = "SELECT c.*, COUNT(s.sales_id) as total_sales, COALESCE(SUM(s.total_amount), 0) as total_spent
             FROM customers c
-            LEFT JOIN sales s ON c.customer_id = s.customer_id
+            LEFT JOIN sales s ON c.customer_name = s.customer_name
             {$where}
             GROUP BY c.customer_id
             ORDER BY c.customer_id ASC";
@@ -62,12 +62,12 @@ try {
     <div class="card-body">
         <form method="GET" class="mb-3">
             <div class="input-group">
-                <input type="text" class="form-control" name="search" placeholder="Search by name or contact..." value="<?php echo escape($search); ?>">
+                <input type="text" class="form-control" name="search" placeholder="Search by name..." value="<?php echo escape($search); ?>">
                 <button class="btn btn-outline-secondary" type="submit">
                     <i class="bi bi-search"></i> Search
                 </button>
                 <?php if ($search): ?>
-                <a href="sales/index.php" class="btn btn-outline-secondary">
+                <a href="index.php" class="btn btn-outline-secondary">
                     <i class="bi bi-x"></i> Clear
                 </a>
                 <?php endif; ?>
@@ -79,7 +79,7 @@ try {
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Full Name</th>
+                        <th>Customer Name</th>
                         <th>Receipts</th>
                         <th>Total Sales</th>
                         <th>Total Spent</th>
@@ -95,9 +95,9 @@ try {
                     <?php foreach ($customers as $customer): ?>
                     <tr>
                         <td><?php echo $customer['customer_id']; ?></td>
-                        <td><strong><?php echo escape($customer['full_name']); ?></strong></td>
+                        <td><strong><?php echo escape($customer['customer_name']); ?></strong></td>
                         <td>
-                            <a href="<?php echo BASE_URL; ?>sales/index.php?customer_id=<?php echo $customer['customer_id']; ?>" class="btn btn-sm btn-primary">
+                            <a href="<?php echo BASE_URL; ?>sales/index.php?customer_name=<?php echo urlencode($customer['customer_name']); ?>" class="btn btn-sm btn-primary">
                                 <i class="bi bi-receipt"></i> View Receipts
                             </a>
                         </td>

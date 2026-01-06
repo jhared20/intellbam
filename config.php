@@ -120,28 +120,18 @@ function requireAdminOrOwner($user_id_to_check) {
  */
 function logActivity($action) {
     $pdo = getDB();
-    $user_id = $_SESSION['user_id'] ?? null;
-    // Only attempt to log if we have a valid user_id; avoid FK errors when user is missing
+    $username = $_SESSION['username'] ?? null;
+    
     try {
-        if ($user_id) {
+        if ($username) {
             // Verify user exists to prevent foreign key violations
-            $check = $pdo->prepare("SELECT user_id FROM users WHERE user_id = ?");
-            $check->execute([$user_id]);
+            $check = $pdo->prepare("SELECT username FROM users WHERE username = ?");
+            $check->execute([$username]);
             $exists = (bool) $check->fetch();
-        } else {
-            $exists = false;
-        }
-
-        if ($exists) {
-            $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
-            $stmt->execute([$user_id, $action]);
-        } else {
-            // If no valid user, insert without user_id if column allows NULL, otherwise skip logging
-            $stmt = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (NULL, ?)");
-            try {
-                $stmt->execute([$action]);
-            } catch (PDOException $e) {
-                // If inserting NULL also fails due to schema, silently skip logging to avoid fatal errors
+            
+            if ($exists) {
+                $stmt = $pdo->prepare("INSERT INTO activity_logs (username, action) VALUES (?, ?)");
+                $stmt->execute([$username, $action]);
             }
         }
     } catch (PDOException $e) {

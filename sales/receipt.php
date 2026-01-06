@@ -8,23 +8,17 @@ require_once '../config.php';
 requireLogin();
 
 $pdo = getDB();
-$sale_id = $_GET['id'] ?? 0;
+$sales_id = $_GET['id'] ?? 0;
 
-if (!$sale_id) {
+if (!$sales_id) {
     header('Location: index.php');
     exit;
 }
 
 // Get sale data
 try {
-    $stmt = $pdo->prepare("
-        SELECT s.*, u.username, p.payment_method, p.amount_paid, p.change_amount
-        FROM sales s
-        LEFT JOIN users u ON s.user_id = u.user_id
-        LEFT JOIN payments p ON s.sale_id = p.sale_id
-        WHERE s.sale_id = ?
-    ");
-    $stmt->execute([$sale_id]);
+    $stmt = $pdo->prepare("SELECT * FROM sales WHERE sales_id = ?");
+    $stmt->execute([$sales_id]);
     $sale = $stmt->fetch();
     
     if (!$sale) {
@@ -32,26 +26,38 @@ try {
         exit;
     }
     
-    // Prefer stored customer name from the sale record, fallback to session value
+    // Get payment data - query by sales_id for direct match
+    $payment_method = 'Unknown';
+    $amount_paid = 0;
+    $change_amount = 0;
+    
+    $stmt = $pdo->prepare("SELECT payment_method, amount_paid, change_amount FROM payments WHERE sales_id = ? LIMIT 1");
+    $stmt->execute([$sales_id]);
+    $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($payment) {
+        $payment_method = $payment['payment_method'];
+        $amount_paid = $payment['amount_paid'];
+        $change_amount = $payment['change_amount'];
+    }
+    
+    $sale['payment_method'] = $payment_method;
+    $sale['amount_paid'] = $amount_paid;
+    $sale['change_amount'] = $change_amount;
+    
     $customer_name = $sale['customer_name'] ?? ($_SESSION['sale_customer_name'] ?? '');
     unset($_SESSION['sale_customer_name']);
     
     // Get sale items
-    $stmt = $pdo->prepare("
-        SELECT si.*, COALESCE(si.product_name, p.product_name) AS product_name
-        FROM sale_items si
-        LEFT JOIN products p ON si.product_id = p.product_id
-        WHERE si.sale_id = ?
-        ORDER BY si.sale_item_id
-    ");
-    $stmt->execute([$sale_id]);
+    $stmt = $pdo->prepare("SELECT * FROM sale_items WHERE customer_name = ? ORDER BY sales_items_id");
+    $stmt->execute([$sale['customer_name']]);
     $items = $stmt->fetchAll();
     
 } catch (PDOException $e) {
     die("Error loading receipt: " . $e->getMessage());
 }
 
-$page_title = 'Receipt #' . $sale_id;
+$page_title = 'Receipt #' . $sales_id;
 require_once '../includes/header.php';
 ?>
 
@@ -70,11 +76,11 @@ require_once '../includes/header.php';
                 <div class="mb-3">
                     <div class="row mb-2">
                         <div class="col-6"><strong>Receipt #:</strong></div>
-                        <div class="col-6"><?php echo $sale_id; ?></div>
+                        <div class="col-6"><?php echo $sales_id; ?></div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-6"><strong>Date:</strong></div>
-                        <div class="col-6"><?php echo formatDate($sale['sale_date']); ?></div>
+                        <div class="col-6"><?php echo formatDate($sale['sales_date']); ?></div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-6"><strong>Cashier:</strong></div>

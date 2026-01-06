@@ -26,21 +26,17 @@ try {
         // Daily Report
         $stmt = $pdo->prepare("
             SELECT 
-                s.sale_id,
-                s.sale_date,
+                s.sales_id,
+                s.sales_date,
                 s.total_amount,
-                u.username,
-                c.full_name as customer_name,
-                p.payment_method,
-                COUNT(si.sale_item_id) as item_count
+                s.username,
+                s.customer_name,
+                COUNT(si.sales_items_id) as item_count
             FROM sales s
-            LEFT JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN customers c ON s.customer_id = c.customer_id
-            LEFT JOIN payments p ON s.sale_id = p.sale_id
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE DATE(s.sale_date) = ?
-            GROUP BY s.sale_id
-            ORDER BY s.sale_id ASC
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE DATE(s.sales_date) = ?
+            GROUP BY s.sales_id
+            ORDER BY s.sales_id ASC
         ");
         $stmt->execute([$date]);
         $report_data = $stmt->fetchAll();
@@ -48,13 +44,13 @@ try {
         // Get summary
         $stmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT s.sale_id) as total_sales,
-                COUNT(DISTINCT s.customer_id) as total_customers,
+                COUNT(DISTINCT s.sales_id) as total_sales,
+                COUNT(DISTINCT s.customer_name) as total_customers,
                 COALESCE(SUM(s.total_amount), 0) as total_amount,
                 COALESCE(SUM(si.quantity), 0) as total_items
             FROM sales s
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE DATE(s.sale_date) = ?
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE DATE(s.sales_date) = ?
         ");
         $stmt->execute([$date]);
         $summary = $stmt->fetch();
@@ -68,16 +64,16 @@ try {
         
         $stmt = $pdo->prepare("
             SELECT 
-                DATE(s.sale_date) as sale_date,
-                COUNT(DISTINCT s.sale_id) as sale_count,
-                COUNT(DISTINCT s.customer_id) as customer_count,
+                DATE(s.sales_date) as sales_date,
+                COUNT(DISTINCT s.sales_id) as sale_count,
+                COUNT(DISTINCT s.customer_name) as customer_count,
                 COALESCE(SUM(s.total_amount), 0) as daily_total,
                 COALESCE(SUM(si.quantity), 0) as item_count
             FROM sales s
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE YEAR(s.sale_date) = ? AND MONTH(s.sale_date) = ?
-            GROUP BY DATE(s.sale_date)
-            ORDER BY sale_date ASC
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE YEAR(s.sales_date) = ? AND MONTH(s.sales_date) = ?
+            GROUP BY DATE(s.sales_date)
+            ORDER BY sales_date ASC
         ");
         $stmt->execute([$year, $month_num]);
         $report_data = $stmt->fetchAll();
@@ -85,13 +81,13 @@ try {
         // Get summary
         $stmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT s.sale_id) as total_sales,
-                COUNT(DISTINCT s.customer_id) as total_customers,
+                COUNT(DISTINCT s.sales_id) as total_sales,
+                COUNT(DISTINCT s.customer_name) as total_customers,
                 COALESCE(SUM(s.total_amount), 0) as total_amount,
                 COALESCE(SUM(si.quantity), 0) as total_items
             FROM sales s
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE YEAR(s.sale_date) = ? AND MONTH(s.sale_date) = ?
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE YEAR(s.sales_date) = ? AND MONTH(s.sales_date) = ?
         ");
         $stmt->execute([$year, $month_num]);
         $summary = $stmt->fetch();
@@ -103,16 +99,16 @@ try {
         // Yearly Report
         $stmt = $pdo->prepare("
             SELECT 
-                MONTH(s.sale_date) as month_num,
-                DATE_FORMAT(s.sale_date, '%M %Y') as month_name,
-                COUNT(DISTINCT s.sale_id) as sale_count,
-                COUNT(DISTINCT s.customer_id) as customer_count,
+                MONTH(s.sales_date) as month_num,
+                DATE_FORMAT(s.sales_date, '%M %Y') as month_name,
+                COUNT(DISTINCT s.sales_id) as sale_count,
+                COUNT(DISTINCT s.customer_name) as customer_count,
                 COALESCE(SUM(s.total_amount), 0) as monthly_total,
                 COALESCE(SUM(si.quantity), 0) as item_count
             FROM sales s
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE YEAR(s.sale_date) = ?
-            GROUP BY MONTH(s.sale_date)
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE YEAR(s.sales_date) = ?
+            GROUP BY MONTH(s.sales_date)
             ORDER BY month_num DESC
         ");
         $stmt->execute([$year]);
@@ -121,13 +117,13 @@ try {
         // Get summary
         $stmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT s.sale_id) as total_sales,
-                COUNT(DISTINCT s.customer_id) as total_customers,
+                COUNT(DISTINCT s.sales_id) as total_sales,
+                COUNT(DISTINCT s.customer_name) as total_customers,
                 COALESCE(SUM(s.total_amount), 0) as total_amount,
                 COALESCE(SUM(si.quantity), 0) as total_items
             FROM sales s
-            LEFT JOIN sale_items si ON s.sale_id = si.sale_id
-            WHERE YEAR(s.sale_date) = ?
+            LEFT JOIN sale_items si ON s.customer_name = si.customer_name
+            WHERE YEAR(s.sales_date) = ?
         ");
         $stmt->execute([$year]);
         $summary = $stmt->fetch();
@@ -241,7 +237,6 @@ try {
                         <th>Time</th>
                         <th>Customer</th>
                         <th>Cashier</th>
-                        <th>Payment</th>
                         <th>Items</th>
                         <th>Amount</th>
                     </tr>
@@ -272,15 +267,14 @@ try {
                     <?php foreach ($report_data as $row): ?>
                     <tr>
                         <?php if ($report_type === 'daily'): ?>
-                        <td>#<?php echo $row['sale_id']; ?></td>
-                        <td><?php echo date('h:i A', strtotime($row['sale_date'])); ?></td>
+                        <td>#<?php echo $row['sales_id']; ?></td>
+                        <td><?php echo date('h:i A', strtotime($row['sales_date'])); ?></td>
                         <td><?php echo escape($row['customer_name'] ?? 'Walk-in'); ?></td>
                         <td><?php echo escape($row['username']); ?></td>
-                        <td><span class="badge bg-info text-capitalize"><?php echo escape($row['payment_method']); ?></span></td>
                         <td><?php echo $row['item_count']; ?></td>
                         <td><strong><?php echo formatCurrency($row['total_amount']); ?></strong></td>
                         <?php elseif ($report_type === 'monthly'): ?>
-                        <td><?php echo date('M d, Y', strtotime($row['sale_date'])); ?></td>
+                        <td><?php echo date('M d, Y', strtotime($row['sales_date'])); ?></td>
                         <td><?php echo $row['sale_count']; ?></td>
                         <td><?php echo $row['customer_count']; ?></td>
                         <td><?php echo number_format($row['item_count']); ?></td>

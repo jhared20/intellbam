@@ -26,7 +26,7 @@ foreach ($_SESSION['cart'] as $item) {
 $customers = [];
 $selected_customer_name = $_SESSION['selected_customer_name'] ?? null;
 try {
-    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY customer_id ASC");
+    $stmt = $pdo->query("SELECT customer_name FROM customers ORDER BY customer_name ASC");
     $customers = $stmt->fetchAll();
 } catch (PDOException $e) {
     // Ignore
@@ -56,46 +56,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Create or get customer if name is provided
-            $customer_id = null;
             $_SESSION['sale_customer_name'] = $customer_name;
             
             if (!empty($customer_name)) {
                 // Check if customer with this name already exists
-                $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE full_name = ?");
+                $stmt = $pdo->prepare("SELECT customer_name FROM customers WHERE customer_name = ?");
                 $stmt->execute([$customer_name]);
                 $existing_customer = $stmt->fetch();
                 
-                if ($existing_customer) {
-                    $customer_id = $existing_customer['customer_id'];
-                } else {
+                if (!$existing_customer) {
                     // Create new customer
-                    $stmt = $pdo->prepare("INSERT INTO customers (full_name) VALUES (?)");
+                    $stmt = $pdo->prepare("INSERT INTO customers (customer_name) VALUES (?)");
                     $stmt->execute([$customer_name]);
-                    $customer_id = $pdo->lastInsertId();
                 }
             }
             
-            // Create sale record (store customer name as denormalized field)
-            $session_user_id = $_SESSION['user_id'] ?? null;
-            // Verify user exists; if not, record sale with NULL user_id to avoid FK errors
-            $user_id = null;
-            if ($session_user_id) {
-                $check = $pdo->prepare("SELECT user_id FROM users WHERE user_id = ?");
-                $check->execute([$session_user_id]);
-                if ($check->fetch()) {
-                    $user_id = $session_user_id;
-                }
-            }
+            // Create sale record (store customer_name and username in denormalized fields)
+            $username = $_SESSION['username'] ?? null;
             $customer_display_name = !empty($customer_name) ? $customer_name : null;
-            $stmt = $pdo->prepare("INSERT INTO sales (customer_id, customer_name, user_id, total_amount) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$customer_id, $customer_display_name, $user_id, $cart_total]);
-            $sale_id = $pdo->lastInsertId();
+            $stmt = $pdo->prepare("INSERT INTO sales (customer_name, username, total_amount) VALUES (?, ?, ?)");
+            $stmt->execute([$customer_display_name, $username, $cart_total]);
+            $sales_id = $pdo->lastInsertId();
             
             // Create sale items and update stock
             foreach ($_SESSION['cart'] as $item) {
-                // Insert sale item (store product name to preserve historical data)
-                $stmt = $pdo->prepare("INSERT INTO sale_items (sale_id, product_id, product_name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$sale_id, $item['product_id'], $item['product_name'] ?? null, $item['quantity'], $item['price'], $item['subtotal']]);
+                // Insert sale item (store product_name and customer_name to preserve historical data)
+                $stmt = $pdo->prepare("INSERT INTO sale_items (customer_name, product_name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$customer_display_name, $item['product_name'] ?? null, $item['quantity'], $item['price'], $item['subtotal']]);
                 
                 // Update product stock
                 $stmt = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?");
@@ -104,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Create payment record
             $change_amount = $amount_paid - $cart_total;
-            $stmt = $pdo->prepare("INSERT INTO payments (sale_id, payment_method, amount_paid, change_amount) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$sale_id, $payment_method, $amount_paid, $change_amount]);
+            $stmt = $pdo->prepare("INSERT INTO payments (sales_id, customer_name, payment_method, amount_paid, change_amount) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$sales_id, $customer_display_name, $payment_method, $amount_paid, $change_amount]);
             
             // Log activity
             $customer_display = !empty($customer_name) ? $customer_name : 'Walk-in';
@@ -118,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($_SESSION['selected_customer_name']);
             
             // Redirect to receipt
-            header("Location: receipt.php?id={$sale_id}");
+            header("Location: receipt.php?id={$sales_id}");
             exit;
             
         } catch (Exception $e) {

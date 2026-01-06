@@ -42,13 +42,13 @@ try {
 
 // Handle POST request BEFORE including header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $category_id = $_POST['category_id'] ?? 0;
+    $category_name = trim($_POST['category_name'] ?? '');
     $product_name = trim($_POST['product_name'] ?? '');
     $barcode = trim($_POST['barcode'] ?? '');
     $price = $_POST['price'] ?? 0;
     $stock_quantity = $_POST['stock_quantity'] ?? 0;
     
-    if (empty($product_name) || $category_id == 0 || $price <= 0) {
+    if (empty($product_name) || empty($category_name) || $price <= 0) {
         $error = 'Please fill in all required fields';
     } else {
         try {
@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($error)) {
-                $stmt = $pdo->prepare("UPDATE products SET category_id = ?, product_name = ?, barcode = ?, price = ?, stock_quantity = ? WHERE product_id = ?");
-                $stmt->execute([$category_id, $product_name, $barcode ?: null, $price, $stock_quantity, $product_id]);
+                $stmt = $pdo->prepare("UPDATE products SET category_name = ?, product_name = ?, barcode = ?, price = ?, stock_quantity = ? WHERE product_id = ?");
+                $stmt->execute([$category_name, $product_name, $barcode ?: null, $price, $stock_quantity, $product_id]);
                 
                 logActivity("Product updated: {$product_name} (ID: {$product_id})");
                 
@@ -91,11 +91,11 @@ require_once '../includes/header.php';
     <div class="card-body">
         <form method="POST" action="">
             <div class="mb-3">
-                <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
-                <select class="form-select" id="category_id" name="category_id" required>
+                <label for="category_name" class="form-label">Category <span class="text-danger">*</span></label>
+                <select class="form-select" id="category_name" name="category_name" required>
                     <option value="">Select Category</option>
                     <?php foreach ($categories as $category): ?>
-                    <option value="<?php echo $category['category_id']; ?>" <?php echo $product['category_id'] == $category['category_id'] ? 'selected' : ''; ?>>
+                    <option value="<?php echo escape($category['category_name']); ?>" <?php echo $product['category_name'] == $category['category_name'] ? 'selected' : ''; ?>>
                         <?php echo escape($category['category_name']); ?>
                     </option>
                     <?php endforeach; ?>

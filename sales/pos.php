@@ -121,9 +121,8 @@ if (!empty($search)) {
 }
 
 try {
-    $sql = "SELECT p.*, c.category_name 
+    $sql = "SELECT p.* 
             FROM products p 
-            LEFT JOIN categories c ON p.category_id = c.category_id 
             {$where}
             ORDER BY p.product_name
             LIMIT 50";
@@ -138,32 +137,22 @@ try {
 // Get customers for selection
 $customers = [];
 try {
-    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY customer_id ASC LIMIT 100");
+    $stmt = $pdo->query("SELECT customer_name FROM customers ORDER BY customer_name ASC LIMIT 100");
     $customers = $stmt->fetchAll();
 } catch (PDOException $e) {
     // Ignore error
 }
 
 // Get selected customer from session
-$selected_customer_id = $_SESSION['selected_customer_id'] ?? null;
-$selected_customer_name = '';
-
-if ($selected_customer_id && !empty($customers)) {
-    foreach ($customers as $c) {
-        if ($c['customer_id'] == $selected_customer_id) {
-            $selected_customer_name = $c['full_name'];
-            break;
-        }
-    }
-}
+$selected_customer_name = $_SESSION['selected_customer_name'] ?? '';
 
 // Handle customer selection
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'select_customer') {
-    $customer_id = $_POST['customer_id'] ?? null;
-    if ($customer_id) {
-        $_SESSION['selected_customer_id'] = $customer_id;
+    $customer_name = $_POST['customer_name'] ?? null;
+    if ($customer_name) {
+        $_SESSION['selected_customer_name'] = $customer_name;
     } else {
-        unset($_SESSION['selected_customer_id']);
+        unset($_SESSION['selected_customer_name']);
     }
     header('Location: pos.php');
     exit;

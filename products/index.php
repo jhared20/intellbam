@@ -26,9 +26,8 @@ if (!empty($search)) {
 }
 
 try {
-    $sql = "SELECT p.*, c.category_name 
+    $sql = "SELECT p.* 
             FROM products p 
-            LEFT JOIN categories c ON p.category_id = c.category_id 
             {$where}
             ORDER BY p.product_id ASC";
     

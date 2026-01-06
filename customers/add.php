@@ -9,19 +9,18 @@ requireAdmin();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $full_name = trim($_POST['full_name'] ?? '');
-    $contact = trim($_POST['contact'] ?? '');
+    $customer_name = trim($_POST['customer_name'] ?? '');
     
-    if (empty($full_name)) {
-        $error = 'Full name is required';
+    if (empty($customer_name)) {
+        $error = 'Customer name is required';
     } else {
         $pdo = getDB();
         
         try {
-            $stmt = $pdo->prepare("INSERT INTO customers (full_name, contact) VALUES (?, ?)");
-            $stmt->execute([$full_name, $contact ?: null]);
+            $stmt = $pdo->prepare("INSERT INTO customers (customer_name) VALUES (?)");
+            $stmt->execute([$customer_name]);
             
-            logActivity("Customer created: {$full_name}");
+            logActivity("Customer created: {$customer_name}");
             
             header('Location: index.php?success=1');
             exit;
@@ -46,13 +45,8 @@ require_once '../includes/header.php';
     <div class="card-body">
         <form method="POST" action="">
             <div class="mb-3">
-                <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="full_name" name="full_name" required autofocus>
-            </div>
-            
-            <div class="mb-3">
-                <label for="contact" class="form-label">Contact</label>
-                <input type="text" class="form-control" id="contact" name="contact" placeholder="Phone number or email">
+                <label for="customer_name" class="form-label">Customer Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="customer_name" name="customer_name" required autofocus>
             </div>
             
             <div class="d-flex gap-2">

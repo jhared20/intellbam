@@ -18,7 +18,7 @@ $error = $_GET['error'] ?? '';
 // Date filter
 $date_from = $_GET['date_from'] ?? null;
 $date_to = $_GET['date_to'] ?? null;
-$customer_filter = isset($_GET['customer_id']) && is_numeric($_GET['customer_id']) ? intval($_GET['customer_id']) : null;
+$customer_filter = isset($_GET['customer_name']) ? trim($_GET['customer_name']) : null;
 
 // If viewing receipts for a specific customer and no date filter provided,
 // default to a wide range so results aren't empty.
@@ -31,28 +31,25 @@ if ($date_to === null) {
 
 try {
     $query = "
-        SELECT s.*, u.username, c.full_name as customer_name, p.payment_method
+        SELECT s.*
         FROM sales s
-        LEFT JOIN users u ON s.user_id = u.user_id
-        LEFT JOIN customers c ON s.customer_id = c.customer_id
-        LEFT JOIN payments p ON s.sale_id = p.sale_id
-        WHERE DATE(s.sale_date) BETWEEN ? AND ?
+        WHERE DATE(s.sales_date) BETWEEN ? AND ?
     ";
 
-    // Apply customer filter if provided
+    // Apply customer filter if provided (now filter by customer_name directly)
     $params = [$date_from, $date_to];
     if ($customer_filter !== null) {
-        $query .= " AND s.customer_id = ?";
+        $query .= " AND s.customer_name = ?";
         $params[] = $customer_filter;
     }
 
     // Cashiers can only see their own sales
     if (!isAdmin()) {
-        $query .= " AND s.user_id = ? ";
-        $params[] = $_SESSION['user_id'];
+        $query .= " AND s.username = ? ";
+        $params[] = $_SESSION['username'];
     }
 
-    $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
+    $stmt = $pdo->prepare($query . " ORDER BY s.sales_id ASC");
     $stmt->execute($params);
     
     $sales = $stmt->fetchAll();
@@ -123,7 +120,6 @@ try {
                         <th>Date</th>
                         <th>Customer</th>
                         <th>Cashier</th>
-                        <th>Payment</th>
                         <th>Amount</th>
                         <th>Actions</th>
                     </tr>
@@ -131,21 +127,20 @@ try {
                 <tbody>
                     <?php if (empty($sales)): ?>
                     <tr>
-                        <td colspan="7" class="text-center text-muted">No sales found</td>
+                        <td colspan="6" class="text-center text-muted">No sales found</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($sales as $sale): ?>
                     <tr>
-                        <td>#<?php echo $sale['sale_id']; ?></td>
-                        <td><?php echo formatDate($sale['sale_date']); ?></td>
+                        <td>#<?php echo $sale['sales_id']; ?></td>
+                        <td><?php echo formatDate($sale['sales_date']); ?></td>
                         <td><?php echo escape($sale['customer_name'] ?? 'Walk-in'); ?></td>
                         <td><?php echo escape($sale['username']); ?></td>
-                        <td><span class="badge bg-info text-capitalize"><?php echo escape($sale['payment_method']); ?></span></td>
                         <td><strong><?php echo formatCurrency($sale['total_amount']); ?></strong></td>
                         <td>
-                            <a href="receipt.php?id=<?php echo $sale['sale_id']; ?>" class="btn btn-sm btn-primary" target="_blank">
+                            <button class="btn btn-sm btn-primary" onclick="viewReceipt(<?php echo $sale['sales_id']; ?>)">
                                 <i class="bi bi-receipt"></i> Receipt
-                            </a>
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -155,6 +150,105 @@ try {
         </div>
     </div>
 </div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-receipt"></i> Sale Receipt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Receipt Alert Container -->
+<div id="receiptContainer"></div>
+
+<script>
+function viewReceipt(salesId) {
+    console.log('Loading receipt for sales_id:', salesId);
+    
+    fetch(`receipt-ajax.php?id=${salesId}`)
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                displayReceiptModal(data.html);
+            } else {
+                showAlert('Error loading receipt: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            showAlert('Error loading receipt: ' + error, 'danger');
+        });
+}
+
+function displayReceiptModal(receiptHtml) {
+    const receiptContent = document.getElementById('receiptContent');
+    receiptContent.innerHTML = receiptHtml;
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+    modal.show();
+}
+
+function printReceipt() {
+    const printContent = document.getElementById('receiptContent').innerHTML;
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { margin: 20px; padding: 0; }
+                @media print {
+                    body { margin: 0; padding: 10px; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            ${printContent}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 250);
+}
+
+function showAlert(message, type = 'info') {
+    const container = document.getElementById('receiptContainer');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show my-4`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    container.innerHTML = '';
+    container.appendChild(alertDiv);
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>
 
