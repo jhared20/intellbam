@@ -16,8 +16,18 @@ $success = $_GET['success'] ?? '';
 $error = $_GET['error'] ?? '';
 
 // Date filter
-$date_from = $_GET['date_from'] ?? date('Y-m-d');
-$date_to = $_GET['date_to'] ?? date('Y-m-d');
+$date_from = $_GET['date_from'] ?? null;
+$date_to = $_GET['date_to'] ?? null;
+$customer_filter = isset($_GET['customer_id']) && is_numeric($_GET['customer_id']) ? intval($_GET['customer_id']) : null;
+
+// If viewing receipts for a specific customer and no date filter provided,
+// default to a wide range so results aren't empty.
+if ($date_from === null) {
+    $date_from = $customer_filter !== null ? '1970-01-01' : date('Y-m-d');
+}
+if ($date_to === null) {
+    $date_to = date('Y-m-d');
+}
 
 try {
     $query = "
@@ -28,17 +38,22 @@ try {
         LEFT JOIN payments p ON s.sale_id = p.sale_id
         WHERE DATE(s.sale_date) BETWEEN ? AND ?
     ";
-    
+
+    // Apply customer filter if provided
+    $params = [$date_from, $date_to];
+    if ($customer_filter !== null) {
+        $query .= " AND s.customer_id = ?";
+        $params[] = $customer_filter;
+    }
+
     // Cashiers can only see their own sales
     if (!isAdmin()) {
         $query .= " AND s.user_id = ? ";
-        $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
-        $stmt->execute([$date_from, $date_to, $_SESSION['user_id']]);
-    } else {
-        // Admins see all sales
-        $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
-        $stmt->execute([$date_from, $date_to]);
+        $params[] = $_SESSION['user_id'];
     }
+
+    $stmt = $pdo->prepare($query . " ORDER BY s.sale_id ASC");
+    $stmt->execute($params);
     
     $sales = $stmt->fetchAll();
     

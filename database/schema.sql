@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS sales (
     user_id INT NOT NULL,
     sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10, 2) NOT NULL,
+    customer_name VARCHAR(200) DEFAULT NULL,
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
     quantity INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
+    product_name VARCHAR(200) DEFAULT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -98,4 +100,32 @@ INSERT INTO users (username, password, role) VALUES
 
 -- Insert sample category
 INSERT INTO categories (category_name) VALUES ('General');
+
+-- Add columns (MySQL 8+ supports IF NOT EXISTS)
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_name VARCHAR(200) DEFAULT NULL;
+ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(200) DEFAULT NULL;
+
+-- Backfill sales.customer_name from customers.full_name
+UPDATE sales s
+LEFT JOIN customers c ON s.customer_id = c.customer_id
+SET s.customer_name = c.full_name
+WHERE s.customer_id IS NOT NULL
+  AND (s.customer_name IS NULL OR s.customer_name = '');
+
+-- Mark walk-in sales explicitly (optional)
+UPDATE sales
+SET customer_name = 'Walk-in'
+WHERE customer_id IS NULL
+  AND (customer_name IS NULL OR customer_name = '');
+
+-- Backfill sale_items.product_name from products.product_name
+UPDATE sale_items si
+LEFT JOIN products p ON si.product_id = p.product_id
+SET si.product_name = p.product_name
+WHERE si.product_id IS NOT NULL
+  AND (si.product_name IS NULL OR si.product_name = '');
+
+-- Quick checks
+SELECT sale_id, customer_id, customer_name, total_amount FROM sales ORDER BY sale_id DESC LIMIT 20;
+SELECT sale_item_id, sale_id, product_id, product_name, quantity FROM sale_items ORDER BY sale_item_id DESC LIMIT 20;
 

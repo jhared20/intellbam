@@ -137,7 +137,7 @@
                 <i class="bi bi-tags"></i> Categories
             </a>
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'customers') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>customers/index.php">
-                <i class="bi bi-people"></i> Customers
+                <i class="bi bi-clock-history"></i> History
             </a>
             <a class="nav-link <?php echo (strpos($_SERVER['PHP_SELF'], 'reports') !== false) ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>reports/index.php">
                 <i class="bi bi-graph-up"></i> Reports

@@ -202,7 +202,7 @@ try {
                         <strong><?php echo number_format($total_categories); ?></strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
-                        <span>Customers</span>
+                        <span>History</span>
                         <strong><?php echo number_format($total_customers); ?></strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">

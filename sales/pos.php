@@ -7,8 +7,7 @@
 require_once '../config.php';
 requireLogin();
 
-$page_title = 'Point of Sale';
-require_once '../includes/header.php';
+
 
 $pdo = getDB();
 
@@ -101,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
+
 // Calculate cart total
 $cart_total = 0;
 foreach ($_SESSION['cart'] as $item) {
@@ -136,11 +136,38 @@ try {
 // Get customers for selection
 $customers = [];
 try {
-    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY full_name LIMIT 100");
+    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY customer_id ASC LIMIT 100");
     $customers = $stmt->fetchAll();
 } catch (PDOException $e) {
     // Ignore error
 }
+
+// Get selected customer from session
+$selected_customer_id = $_SESSION['selected_customer_id'] ?? null;
+$selected_customer_name = '';
+
+if ($selected_customer_id && !empty($customers)) {
+    foreach ($customers as $c) {
+        if ($c['customer_id'] == $selected_customer_id) {
+            $selected_customer_name = $c['full_name'];
+            break;
+        }
+    }
+}
+
+// Handle customer selection
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'select_customer') {
+    $customer_id = $_POST['customer_id'] ?? null;
+    if ($customer_id) {
+        $_SESSION['selected_customer_id'] = $customer_id;
+    } else {
+        unset($_SESSION['selected_customer_id']);
+    }
+    header('Location: pos.php');
+    exit;
+}
+$page_title = 'Point of Sale';
+require_once '../includes/header.php';
 ?>
 
 <?php if (isset($error)): ?>

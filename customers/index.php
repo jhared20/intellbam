@@ -1,13 +1,13 @@
 <?php
 /**
- * Customers Management (Admin Only)
- * List all customers
+ * History (Customers) View (Admin Only)
+ * List all customer history entries
  */
 
 require_once '../config.php';
 requireAdmin();
 
-$page_title = 'Customers';
+$page_title = 'History';
 require_once '../includes/header.php';
 
 $pdo = getDB();
@@ -56,11 +56,8 @@ try {
 <?php endif; ?>
 
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-people"></i> Customers</h5>
-        <a href="add.php" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle"></i> Add Customer
-        </a>
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> History</h5>
     </div>
     <div class="card-body">
         <form method="GET" class="mb-3">
@@ -70,11 +67,11 @@ try {
                     <i class="bi bi-search"></i> Search
                 </button>
                 <?php if ($search): ?>
-                <a href="index.php" class="btn btn-outline-secondary">
+                <a href="sales/index.php" class="btn btn-outline-secondary">
                     <i class="bi bi-x"></i> Clear
                 </a>
                 <?php endif; ?>
-            </div>
+            </div>  
         </form>
         
         <div class="table-responsive">
@@ -83,35 +80,31 @@ try {
                     <tr>
                         <th>ID</th>
                         <th>Full Name</th>
-                        <th>Contact</th>
+                        <th>Receipts</th>
                         <th>Total Sales</th>
                         <th>Total Spent</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($customers)): ?>
                     <tr>
-                        <td colspan="7" class="text-center text-muted">No customers found</td>
+                        <td colspan="6" class="text-center text-muted">No customers found</td>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($customers as $customer): ?>
                     <tr>
                         <td><?php echo $customer['customer_id']; ?></td>
                         <td><strong><?php echo escape($customer['full_name']); ?></strong></td>
-                        <td><?php echo escape($customer['contact'] ?? '-'); ?></td>
-                        <td><span class="badge bg-info"><?php echo $customer['total_sales']; ?></span></td>
-                        <td><?php echo formatCurrency($customer['total_spent']); ?></td>
-                        <td><?php echo formatDate($customer['created_at']); ?></td>
                         <td>
-                            <a href="edit.php?id=<?php echo $customer['customer_id']; ?>" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="delete.php?id=<?php echo $customer['customer_id']; ?>" class="btn btn-sm btn-danger" onclick="return confirmDelete()">
-                                <i class="bi bi-trash"></i> Delete
+                            <a href="<?php echo BASE_URL; ?>sales/index.php?customer_id=<?php echo $customer['customer_id']; ?>" class="btn btn-sm btn-primary">
+                                <i class="bi bi-receipt"></i> View Receipts
                             </a>
                         </td>
+                        <td><span class="badge bg-info"><?php echo $customer['total_sales']; ?></span></td>
+                        <td><?php echo formatCurrency($customer['total_spent']); ?></td>
+                        <td><?php echo date('M d, Y', strtotime($customer['created_at'])); ?></td>
+                        
                     </tr>
                     <?php endforeach; ?>
                     <?php endif; ?>

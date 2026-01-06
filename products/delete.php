@@ -21,6 +21,11 @@ try {
     $product = $stmt->fetch();
     
     if ($product) {
+        // First delete all sale items associated with this product
+        $stmt = $pdo->prepare("DELETE FROM sale_items WHERE product_id = ?");
+        $stmt->execute([$product_id]);
+        
+        // Then delete the product
         $stmt = $pdo->prepare("DELETE FROM products WHERE product_id = ?");
         $stmt->execute([$product_id]);
         

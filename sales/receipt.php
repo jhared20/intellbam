@@ -18,10 +18,9 @@ if (!$sale_id) {
 // Get sale data
 try {
     $stmt = $pdo->prepare("
-        SELECT s.*, u.username, c.full_name as customer_name, p.payment_method, p.amount_paid, p.change_amount
+        SELECT s.*, u.username, p.payment_method, p.amount_paid, p.change_amount
         FROM sales s
         LEFT JOIN users u ON s.user_id = u.user_id
-        LEFT JOIN customers c ON s.customer_id = c.customer_id
         LEFT JOIN payments p ON s.sale_id = p.sale_id
         WHERE s.sale_id = ?
     ");
@@ -33,9 +32,13 @@ try {
         exit;
     }
     
+    // Get customer name from session
+    $customer_name = $_SESSION['sale_customer_name'] ?? '';
+    unset($_SESSION['sale_customer_name']);
+    
     // Get sale items
     $stmt = $pdo->prepare("
-        SELECT si.*, p.product_name
+        SELECT si.*, COALESCE(si.product_name, p.product_name) AS product_name
         FROM sale_items si
         LEFT JOIN products p ON si.product_id = p.product_id
         WHERE si.sale_id = ?
@@ -77,10 +80,17 @@ require_once '../includes/header.php';
                         <div class="col-6"><strong>Cashier:</strong></div>
                         <div class="col-6"><?php echo escape($sale['username']); ?></div>
                     </div>
-                    <?php if ($sale['customer_name']): ?>
+                    <?php if ($customer_name): ?>
                     <div class="row mb-2">
                         <div class="col-6"><strong>Customer:</strong></div>
-                        <div class="col-6"><?php echo escape($sale['customer_name']); ?></div>
+                        <div class="col-6"><?php echo escape($customer_name); ?></div>
+                    </div>
+                    <?php else: ?>
+                    <div class="row mb-2">
+                        <div class="col-6"><strong>Customer:</strong></div>
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" id="customer_name" placeholder="Walk-in Customer" value="Walk-in Customer">
+                        </div>
                     </div>
                     <?php endif; ?>
                 </div>

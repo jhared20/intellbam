@@ -24,8 +24,9 @@ foreach ($_SESSION['cart'] as $item) {
 
 // Get customers
 $customers = [];
+$selected_customer_name = $_SESSION['selected_customer_name'] ?? null;
 try {
-    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY full_name");
+    $stmt = $pdo->query("SELECT customer_id, full_name FROM customers ORDER BY customer_id ASC");
     $customers = $stmt->fetchAll();
 } catch (PDOException $e) {
     // Ignore
@@ -33,7 +34,7 @@ try {
 
 // Process checkout
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $customer_id = $_POST['customer_id'] ?? null;
+    $customer_name = trim($_POST['customer_name'] ?? '');
     $payment_method = $_POST['payment_method'] ?? 'cash';
     $amount_paid = floatval($_POST['amount_paid'] ?? 0);
     
@@ -54,17 +55,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // Create sale record
+            // Create or get customer if name is provided
+            $customer_id = null;
+            $_SESSION['sale_customer_name'] = $customer_name;
+            
+            if (!empty($customer_name)) {
+                // Check if customer with this name already exists
+                $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE full_name = ?");
+                $stmt->execute([$customer_name]);
+                $existing_customer = $stmt->fetch();
+                
+                if ($existing_customer) {
+                    $customer_id = $existing_customer['customer_id'];
+                } else {
+                    // Create new customer
+                    $stmt = $pdo->prepare("INSERT INTO customers (full_name) VALUES (?)");
+                    $stmt->execute([$customer_name]);
+                    $customer_id = $pdo->lastInsertId();
+                }
+            }
+            
+            // Create sale record (store customer name as denormalized field)
             $user_id = $_SESSION['user_id'];
-            $stmt = $pdo->prepare("INSERT INTO sales (customer_id, user_id, total_amount) VALUES (?, ?, ?)");
-            $stmt->execute([$customer_id ?: null, $user_id, $cart_total]);
+            $customer_display_name = !empty($customer_name) ? $customer_name : null;
+            $stmt = $pdo->prepare("INSERT INTO sales (customer_id, customer_name, user_id, total_amount) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$customer_id, $customer_display_name, $user_id, $cart_total]);
             $sale_id = $pdo->lastInsertId();
             
             // Create sale items and update stock
             foreach ($_SESSION['cart'] as $item) {
-                // Insert sale item
-                $stmt = $pdo->prepare("INSERT INTO sale_items (sale_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$sale_id, $item['product_id'], $item['quantity'], $item['price'], $item['subtotal']]);
+                // Insert sale item (store product name to preserve historical data)
+                $stmt = $pdo->prepare("INSERT INTO sale_items (sale_id, product_id, product_name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$sale_id, $item['product_id'], $item['product_name'] ?? null, $item['quantity'], $item['price'], $item['subtotal']]);
                 
                 // Update product stock
                 $stmt = $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?");
@@ -77,12 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$sale_id, $payment_method, $amount_paid, $change_amount]);
             
             // Log activity
-            logActivity("Sale completed: Sale #{$sale_id}, Total: " . formatCurrency($cart_total));
+            $customer_display = !empty($customer_name) ? $customer_name : 'Walk-in';
+            logActivity("Sale completed: Sale #{$sale_id}, Customer: {$customer_display}, Total: " . formatCurrency($cart_total));
             
             $pdo->commit();
             
-            // Clear cart
+            // Clear cart and customer name
             $_SESSION['cart'] = [];
+            unset($_SESSION['selected_customer_name']);
             
             // Redirect to receipt
             header("Location: receipt.php?id={$sale_id}");
@@ -152,13 +176,8 @@ require_once '../includes/header.php';
             <div class="card-body">
                 <form method="POST" action="" id="checkoutForm">
                     <div class="mb-3">
-                        <label for="customer_id" class="form-label">Customer (Optional)</label>
-                        <select class="form-select" id="customer_id" name="customer_id">
-                            <option value="">Walk-in Customer</option>
-                            <?php foreach ($customers as $customer): ?>
-                            <option value="<?php echo $customer['customer_id']; ?>"><?php echo escape($customer['full_name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="customer_name" class="form-label">Customer Name (Optional)</label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" placeholder="Enter customer name..." value="<?php echo escape($selected_customer_name ?? ''); ?>">
                     </div>
                     
                     <div class="mb-3">

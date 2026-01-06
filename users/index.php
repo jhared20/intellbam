@@ -40,7 +40,7 @@ try {
                         <th>ID</th>
                         <th>Username</th>
                         <th>Role</th>
-                        <th>Created</th>
+                        <th>Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

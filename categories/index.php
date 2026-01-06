@@ -52,7 +52,7 @@ try {
                         <th>ID</th>
                         <th>Category Name</th>
                         <th>Products</th>
-                        <th>Created</th>
+                        <th>Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
